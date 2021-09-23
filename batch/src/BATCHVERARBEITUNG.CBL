@@ -15,41 +15,30 @@
            FD INPUT-KONTO.
            01 KONTO-FILE.
               05 BANK-ID PIC X(5).
-              05 KONTONUMMER PIC X(10).
-              05 BETRAG PIC Z(08)9.99.
+              05 KONTONUMMER PIC 9(10).
+              05 BETRAG PIC Z(07)9.99.
               05 VERWENDUNGSZWECK PIC X(53).
 
            FD OUTPUT-KONTO.
            01 AUSGABE.
-               05 AUSGABE-KONTO.
-                 07 ACCOUNT PIC X(9).
-                 07 KONTONUMMER PIC X(10).
-                 07 DOPPELPUNKT PIC X(6).
-                 07 BETRAG PIC 9(11).
-              05 AUSGABE-BANK.
-                 07 WORTE PIC X(14).
-                 07 BANK-ID PIC X(5).
-                 07 DOPPELPUNKT PIC X(6).
-                 07 SUMME PIC Z(15)9.99. 
+              05 ANFANG PIC X(14).
+              05 NUMMER PIC 9(10).
+              05 MITTE PIC X(6).
+              05 BETRAG PIC Z(15)9.99.
        WORKING-STORAGE SECTION.
            01 AKTUELLE-EINGABE.
-              05 AKTUELLE-BANKID PIC X(5).
-              05 AKTUELLE-KONTONUMMER PIC X(10).
-              05 AKTUELLER-BETRAG PIC 9(11).
+              05 AKTUELLE-BANKID PIC 9(5).
+              05 AKTUELLE-KONTONUMMER PIC 9(10).
+              05 AKTUELLER-BETRAG PIC 9(10).
               05 AKTUELLER-VERWENDUNGSZWECK PIC X(53).
            01 AKTUELLE-AUSGABE.
-              05 AUSGABE-KONTO.
-                 07 ACCOUNT PIC X(9) VALUES "Account: ".
-                 07 KONTONUMMER PIC X(10).
-                 07 DOPPELPUNKT PIC X(6) VALUES ":     ".
-                 07 BETRAG PIC Z(08)9.99.
-              05 AUSGABE-BANK.
-                 07 WORTE PIC X(14) VALUES "Total EUR for ".
-                 07 BANK-ID PIC X(5).
-                 07 DOPPELPUNKT PIC X(6) VALUES ":     ".
-                 07 SUMME PIC Z(15)9.99. 
+              05 ANFANG PIC X(14).
+              05 NUMMER PIC 9(10).
+              05 MITTE PIC X(6) VALUES ":     ".
+              05 BETRAG PIC Z(15)9.99.
            01 ENDE PIC X.
            01 ZWISCHENSUMME PIC 9(18).
+           01 AKTUELLE-BANK-ID PIC 9(5).
        PROCEDURE DIVISION.
            DISPLAY 'BATCH-VERARBEITUNG'
 
@@ -57,7 +46,9 @@
               OPEN INPUT INPUT-KONTO.
                  PERFORM UNTIL ENDE ="Y"
                     READ INPUT-KONTO INTO AKTUELLE-EINGABE
-                       AT END MOVE "Y" TO ENDE
+                       AT END MOVE 
+                          "Y" TO ENDE
+                          PERFORM SCHREIBE-BANK
                        NOT AT END PERFORM FILE-SCHREIBEN
                     END-READ
                  END-PERFORM
@@ -69,25 +60,40 @@
 
 
        FILE-SCHREIBEN SECTION.
-           IF BANK-ID IN AUSGABE-BANK IN AKTUELLE-AUSGABE
+           IF AKTUELLE-BANK-ID = 00000 THEN
+              MOVE AKTUELLE-BANKID IN AKTUELLE-EINGABE 
+                TO AKTUELLE-BANK-ID
+           END-IF    
+           
+           IF AKTUELLE-BANK-ID
             = AKTUELLE-BANKID IN AKTUELLE-EINGABE THEN
-              MOVE AKTUELLE-KONTONUMMER IN AKTUELLE-EINGABE
-                 TO KONTONUMMER IN AUSGABE-KONTO IN AKTUELLE-AUSGABE
-              MOVE AKTUELLER-BETRAG TO BETRAG IN AUSGABE-KONTO 
-                 IN AKTUELLE-AUSGABE
-              ADD AKTUELLER-BETRAG TO ZWISCHENSUMME
-
-              MOVE AUSGABE-KONTO IN AKTUELLE-AUSGABE 
-                 TO AUSGABE-KONTO IN AUSGABE
-              WRITE AUSGABE FROM AUSGABE
+              PERFORM SCHREIBE-KONTO
            ELSE
-              MOVE ZWISCHENSUMME TO SUMME IN AUSGABE-BANK
-                 IN AKTUELLE-AUSGABE
-              MOVE AUSGABE-BANK IN AKTUELLE-AUSGABE 
-                 TO AUSGABE-BANK IN AUSGABE
-              WRITE AUSGABE FROM AUSGABE
-              MOVE AKTUELLE-BANKID TO BANK-ID IN AUSGABE-BANK 
-                 IN AKTUELLE-AUSGABE
-              MOVE 0.00 TO SUMME IN AUSGABE-BANK IN AKTUELLE-AUSGABE
+              PERFORM SCHREIBE-BANK
+              MOVE AKTUELLE-BANKID TO AKTUELLE-BANK-ID
+              MOVE 0.00 TO ZWISCHENSUMME 
+              PERFORM SCHREIBE-KONTO
            END-IF      
+       EXIT.
+
+       SCHREIBE-BANK SECTION.
+           MOVE "Total EUR for " TO ANFANG IN AKTUELLE-AUSGABE
+           MOVE ZWISCHENSUMME TO BETRAG IN AKTUELLE-AUSGABE
+           MOVE AKTUELLE-BANK-ID TO NUMMER IN AKTUELLE-AUSGABE
+           PERFORM SCHREIBE-AUSGABE
+       EXIT.
+
+
+       SCHREIBE-KONTO SECTION.
+           MOVE "Account: " TO ANFANG IN AKTUELLE-AUSGABE
+           MOVE AKTUELLE-KONTONUMMER IN AKTUELLE-EINGABE
+              TO NUMMER IN AKTUELLE-AUSGABE
+           MOVE AKTUELLER-BETRAG TO BETRAG IN AKTUELLE-AUSGABE
+           ADD AKTUELLER-BETRAG TO ZWISCHENSUMME
+           PERFORM SCHREIBE-AUSGABE
+       EXIT.
+
+       SCHREIBE-AUSGABE SECTION.
+           MOVE AKTUELLE-AUSGABE TO AUSGABE
+           WRITE AUSGABE FROM AUSGABE
        EXIT.
