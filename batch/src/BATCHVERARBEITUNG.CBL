@@ -66,14 +66,13 @@
            END-IF    
            
            IF AKTUELLE-BANK-ID
-            = AKTUELLE-BANKID IN AKTUELLE-EINGABE THEN
-              PERFORM SCHREIBE-KONTO
-           ELSE
+            <> AKTUELLE-BANKID IN AKTUELLE-EINGABE THEN
+      * Gruppenwechsel
               PERFORM SCHREIBE-BANK
               MOVE AKTUELLE-BANKID TO AKTUELLE-BANK-ID
               MOVE 0.00 TO ZWISCHENSUMME 
-              PERFORM SCHREIBE-KONTO
            END-IF      
+           PERFORM SCHREIBE-KONTO
        EXIT.
 
        SCHREIBE-BANK SECTION.
