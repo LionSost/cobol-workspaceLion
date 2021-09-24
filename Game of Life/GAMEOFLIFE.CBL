@@ -6,7 +6,7 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
-           SELECT INPUT-START  ASSIGN TO 'loops.txt'
+           SELECT INPUT-START  ASSIGN TO 'input.txt'
            ORGANIZATION IS LINE SEQUENTIAL.
        DATA DIVISION.
            FILE SECTION.
@@ -146,12 +146,12 @@
                  UNTIL DISPLAY-X > 50
                  EVALUATE ZELLE(DISPLAY-Y, DISPLAY-X)
                     WHEN 0
-                       DISPLAY "   " AT COLUMN DISPLAY-X, LINE DISPLAY-Y 
+                       DISPLAY "  " AT COLUMN DISPLAY-X, LINE DISPLAY-Y 
                        WITH
                           FOREGROUND-COLOR 7,
                           BACKGROUND-COLOR 7
                      WHEN 1
-                       DISPLAY "    " AT COLUMN DISPLAY-X LINE DISPLAY-Y 
+                       DISPLAY "  " AT COLUMN DISPLAY-X LINE DISPLAY-Y 
                        WITH
                           FOREGROUND-COLOR 4,
                           BACKGROUND-COLOR 4  
